@@ -46,8 +46,7 @@ pip install pymysql
 # PostgreSQL
 pip install psycopg2-binary
 
-# SQL Server (需要系统安装 freetds)
-# macOS: brew install freetds
+# SQL Server (MSSQL)
 pip install pymssql
 
 # 达梦 DM8 (需要安装 Java 环境)
@@ -130,7 +129,7 @@ pip install jaydebeapi JPype1
 - **安全**: 已处理双引号转义，防止针对表名的注入。
 
 ### SQL Server
-- **身份验证**: 支持 SQL Server 身份验证，需确保 `freetds` 配置正确。
+- Support SQL Server authentication.
 
 ## 🔧 开发与测试
 

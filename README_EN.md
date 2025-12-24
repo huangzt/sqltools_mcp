@@ -46,8 +46,7 @@ pip install pymysql
 # PostgreSQL
 pip install psycopg2-binary
 
-# SQL Server (Requires system freetds)
-# macOS: brew install freetds
+# SQL Server (MSSQL)
 pip install pymssql
 
 # Dameng DM8 (Requires Java Environment)
@@ -130,7 +129,7 @@ Check the current connection status.
 - **Security**: Handles double-quote escaping to prevent injection via table names.
 
 ### SQL Server
-- **Authentication**: Supports SQL Server authentication; ensure `freetds` is properly configured.
+- Supports SQL Server authentication.
 
 ## 🔧 Development & Testing
 
