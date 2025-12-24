@@ -6,70 +6,48 @@
 
 [English] | [[中文](README.md)]
 
-A powerful multi-database tool service built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). It allows AI assistants (like Claude Desktop) to directly connect to, query, and analyze various types of databases.
+**SQLTools MCP** is an all-in-one database access service built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io).
 
-## ✨ Key Features
+The core value is: **Stop installing separate MCP servers for every single database. This one service provides AI assistants with unified support for MySQL, Postgres, SQL Server, Dameng (DM8), and SQLite.**
 
-- 🔌 **Extensive Database Support**:
-  - **MySQL**: via `pymysql`
-  - **PostgreSQL**: via `psycopg2-binary`
-  - **SQL Server (MSSQL)**: via `pymssql`
-  - **Dameng (DM8)**: via `jaydebeapi` (JDBC Driver)
-  - **SQLite**: Built-in support, no extra driver needed
-- 🔄 **Dynamic Connection Switching**: Switch between different database instances anytime within the same session.
-- 🌍 **Smart Configuration**: Supports environment variables for pre-set default connections (Plug & Play).
-- 🛡️ **Enhanced Security**:
-  - **SQL Injection Protection**: Hardened identifier quoting for SQLite and other adapters.
-  - **Risk Operation Checks**: Preliminary prompts for potentially destructive operations like `DROP`, `TRUNCATE`, and `DELETE`.
-- 📊 **Performance Optimization**:
-  - **Pagination Support**: Tools like `list_tables` support pagination (`limit`/`offset`) to prevent blocking on large schemas.
-  - **Intelligent Suggestions**: Provides specific fixing suggestions when connection fails.
-- 📝 **MCP Compliant**: Full implementation of tool Annotations, including `readOnlyHint`, `destructiveHint`, etc.
+## ✨ Features
 
-## 📦 Quick Start
+- 🔌 **Unified Database Support**:
+  - **MySQL** / **MariaDB**
+  - **PostgreSQL**
+  - **SQL Server (MSSQL)**
+  - **Dameng (DM8)** (Major Chinese enterprise DB)
+  - **SQLite** (Local file DB)
+- 🔄 **Hot Switching**: Switch between different database environments or types anytime within the same AI session via `connect_database`.
+- 🛡️ **Production Ready**: Built-in SQL injection protection and warning prompts for destructive operations (DROP, TRUNCATE, etc.).
+- 📊 **Optimized UX**: Supports pagination for large tables and provides smart fix suggestions for connection errors.
 
-Management via `uv` is recommended, though standard `pip` is also supported.
+## 📦 Quick Install
 
-### 1. Clone and Install
 ```bash
+# Clone the repository
 git clone https://github.com/huangzt/sqltools_mcp
 cd sqltools-mcp
+
+# Install in editable mode
 pip install -e .
+
+# Install required drivers as needed
+pip install pymysql          # MySQL
+pip install psycopg2-binary  # PostgreSQL
+pip install pymssql          # SQL Server
+pip install jaydebeapi       # DM8 (Requires Java/JRE)
 ```
 
-### 2. Install Database Drivers
-Install the dependencies corresponding to the database types you need:
-```bash
-# MySQL
-pip install pymysql
+## 🚀 AI Client Configuration
 
-# PostgreSQL
-pip install psycopg2-binary
+`sqltools-mcp` is compatible with any AI client that supports the MCP protocol.
 
-# SQL Server (MSSQL)
-pip install pymssql
+### 1. Claude Desktop
 
-# Dameng DM8 (Requires Java Environment)
-pip install jaydebeapi JPype1
-```
-
-## ⚙️ Configuration Guide
-
-### Environment Variables
-You can set the following environment variables when starting the MCP service for auto-connection:
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DB_TYPE` | Database type (mysql, postgres, mssql, dm8, sqlite) | `sqlite` |
-| `DB_HOST` | Database host address | `localhost` |
-| `DB_PORT` | Port number (0 uses protocol default) | `0` |
-| `DB_USER` | Database username | - |
-| `DB_PASSWORD` | Database password | - |
-| `DB_NAME` | Database name (Absolute file path for SQLite) | - |
-
-### Integration with Claude Desktop
-
-Edit your `claude_desktop_config.json` file:
+Edit your `claude_desktop_config.json`:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
@@ -78,70 +56,55 @@ Edit your `claude_desktop_config.json` file:
       "command": "python",
       "args": ["-m", "sqltools_mcp.server"],
       "env": {
-        "DB_TYPE": "mysql",
-        "DB_HOST": "127.0.0.1",
-        "DB_PORT": "3306",
-        "DB_USER": "root",
-        "DB_PASSWORD": "your_password",
-        "DB_NAME": "my_app_db"
+        "DB_TYPE": "sqlite",
+        "DB_NAME": "/path/to/your/db.sqlite"
       }
     }
   }
 }
 ```
 
-## 🛠️ Available Tools
+### 2. Cursor / Windsurf
 
-All tool interfaces are standardized in **English** for better AI model comprehension.
+Add a new MCP server in **Settings -> Features -> MCP** (Cursor) or **Settings -> MCP** (Windsurf):
 
-### 1. `connect_database`
-Connect or switch to a target database.
-- **Parameters**: `dbtype`, `host`, `port`, `username`, `password`, `dbname`.
-- **Features**: Automatically disconnects old connections and verifies the new connection's availability.
+- **Name**: `sqltools`
+- **Type**: `command`
+- **Command**: `python -m sqltools_mcp.server`
 
-### 2. `execute_sql`
-Execute SQL queries.
-- **Parameters**: `query` (required), `timeout`.
-- **Features**: Supports SELECT and DML statements; automatically handles data type conversions (e.g., Decimal to float, datetime to ISO string).
+*(Note: Ensure the environment or the full path of `python` is correctly specified.)*
 
-### 3. `list_tables`
-List all tables in the database.
-- **Parameters**: `schema`, `limit` (default 100), `offset` (default 0).
-- **Features**: Supports pagination, returns table types and row count estimates.
+### 3. Roo Code (VS Code Extension)
 
-### 4. `describe_table`
-Inspect the structure of a specific table.
-- **Parameters**: `table_name` (required), `schema`.
-- **Features**: Returns detailed column info: name, type, nullability, primary key flags, default values, etc.
+Open Roo Code **Settings**, go to **MCP Servers** -> **Edit Settings**, and add:
 
-### 5. `get_connection_status`
-Check the current connection status.
-- **Features**: Returns the current connection protocol and basic config (excluding password).
-
-## 🗄️ Adapter-Specific Notes
-
-### Dameng DM8
-- **Driver**: Automatically searches for `assets/DmJdbcDriver18.jar` or environment variable `DM_HOME`.
-- **Note**: Ensure JRE/JDK 8+ is installed in the system.
-
-### SQLite
-- **Path**: The `dbname` parameter must be the **absolute path** to the file.
-- **Security**: Handles double-quote escaping to prevent injection via table names.
-
-### SQL Server
-- Supports SQL Server authentication.
-
-## 🔧 Development & Testing
-
-### Using MCP Inspector
-```bash
-npx @modelcontextprotocol/inspector python -m sqltools_mcp.server
+```json
+"sqltools": {
+  "command": "python",
+  "args": ["-m", "sqltools_mcp.server"],
+  "env": {
+    "DB_TYPE": "mysql",
+    "DB_HOST": "localhost",
+    "DB_USER": "root",
+    "DB_PASSWORD": "password",
+    "DB_NAME": "test"
+  }
+}
 ```
 
-### Running Unit Tests
-```bash
-pytest tests/
-```
+## 🛠️ Tools
+
+AI models can interact with your databases using these English tools:
+
+- `connect_database`: Connect/Switch to a database. Supports `dbtype`.
+- `execute_sql`: Run any SQL statement.
+- `list_tables`: Show table names (with limit/offset support).
+- `describe_table`: Get detailed schema/column information.
+- `get_connection_status`: Retrieve current connection info.
+
+## 🛡️ Security
+
+Check `SECURITY.md` for details on protection measures like identifier escaping and destructive operation warnings.
 
 ## 📄 License
 Licensed under [MIT License](LICENSE).

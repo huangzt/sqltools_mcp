@@ -6,70 +6,48 @@
 
 [[English](README_EN.md)] | [中文]
 
-一个功能强大的多数据库工具服务，基于 [Model Context Protocol (MCP)](https://modelcontextprotocol.io) 开发。它允许 AI 助手（如 Claude Desktop）直接连接、查询和分析各种类型的数据库。
+**SQLTools MCP** 是一个全能型数据库访问服务，基于 [Model Context Protocol (MCP)](https://modelcontextprotocol.io) 开发。
 
-## ✨ 核心特性
+它的核心痛点解决能力是：**无需为每种数据库安装独立的 MCP Server，只需这一个服务，即可让 AI 助手同时支持 MySQL、Postgres、SQL Server、达梦 (DM8) 以及 SQLite。**
 
-- 🔌 **广泛的数据库支持**：
-  - **MySQL**: 使用 `pymysql`
-  - **PostgreSQL**: 使用 `psycopg2-binary`
-  - **SQL Server (MSSQL)**: 使用 `pymssql`
-  - **达梦 (DM8)**: 使用 `jaydebeapi` (JDBC 驱动)
-  - **SQLite**: 内置支持，无需额外驱动
-- 🔄 **动态切换连接**：支持在同一个会话中随时切换到不同的数据库实例。
-- 🌍 **智能配置**：支持通过环境变量预设默认连接，即插即用。
-- 🛡️ **安全增强**：
-  - **SQL 注入保护**：针对 SQLite 等标识符引用进行了安全加固。
-  - **风险操作检查**：对 `DROP`、`TRUNCATE`、`DELETE` 等潜在破坏性操作提供预检提示。
-- 📊 **性能优化**：
-  - **分页支持**：工具如 `list_tables` 支持分页（limit/offset），防止处理大型 schema 时阻塞。
-  - **智能提示**：当连接失败时提供具体的修复建议（Suggestions）。
-- 📝 **符合 MCP 标准**：完整实现工具注解（Annotations），包括 `readOnlyHint`、`destructiveHint` 等。
+## ✨ 核心能力
+
+- 🔌 **全能数据库适配**：
+  - **MySQL** / **MariaDB**
+  - **PostgreSQL**
+  - **SQL Server (MSSQL)**
+  - **达梦 (DM8)** (国内主流国产数据库)
+  - **SQLite** (本地文件数据库)
+- 🔄 **一键切换**：同一个 AI 会话中可以随时通过 `connect_database` 切换到不同的数据库环境。
+- 🛡️ **生产安全**：具备 SQL 注入防护和针对破坏性操作（DROP/TRUNCATE 等）的预警提示。
+- 📊 **优化体验**：支持大数据量分页加载，失败时提供智能修复建议。
 
 ## 📦 快速安装
 
-推荐使用 `uv` 进行管理，也可以使用标准的 `pip`。
-
-### 1. 克隆并安装环境
 ```bash
+# 克隆并进入目录
 git clone https://github.com/huangzt/sqltools_mcp
 cd sqltools-mcp
+
+# 建议在虚拟环境中安装
 pip install -e .
+
+# 安装您需要的驱动
+pip install pymysql          # MySQL
+pip install psycopg2-binary  # PostgreSQL
+pip install pymssql          # SQL Server
+pip install jaydebeapi       # DM8 (需要 Java 环境)
 ```
 
-### 2. 安装数据库驱动
-根据你需要连接的数据库类型安装对应依赖：
-```bash
-# MySQL
-pip install pymysql
+## 🚀 AI 开发工具配置
 
-# PostgreSQL
-pip install psycopg2-binary
+`sqltools-mcp` 兼容所有支持 MCP 协议的 AI 客户端。
 
-# SQL Server (MSSQL)
-pip install pymssql
+### 1. Claude Desktop (官方客户端)
 
-# 达梦 DM8 (需要安装 Java 环境)
-pip install jaydebeapi JPype1
-```
-
-## ⚙️ 配置指南
-
-### 环境变量
-你可以在启动 MCP 服务时设置以下环境变量来实现自动连接：
-
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| `DB_TYPE` | 数据库类型 (mysql, postgres, mssql, dm8, sqlite) | `sqlite` |
-| `DB_HOST` | 数据库主机地址 | `localhost` |
-| `DB_PORT` | 端口号 (0 则使用各协议默认端口) | `0` |
-| `DB_USER` | 数据库用户名 | - |
-| `DB_PASSWORD` | 数据库密码 | - |
-| `DB_NAME` | 数据库名 (SQLite 为文件绝对路径) | - |
-
-### 集成到 Claude Desktop
-
-编辑你的 `claude_desktop_config.json` 文件：
+编辑 `claude_desktop_config.json`:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
@@ -78,70 +56,55 @@ pip install jaydebeapi JPype1
       "command": "python",
       "args": ["-m", "sqltools_mcp.server"],
       "env": {
-        "DB_TYPE": "mysql",
-        "DB_HOST": "127.0.0.1",
-        "DB_PORT": "3306",
-        "DB_USER": "root",
-        "DB_PASSWORD": "your_password",
-        "DB_NAME": "my_app_db"
+        "DB_TYPE": "sqlite",
+        "DB_NAME": "/path/to/your/db.sqlite"
       }
     }
   }
 }
 ```
 
-## 🛠️ 可用工具 (Tools)
+### 2. Cursor / Windsurf
 
-所有工具接口说明现已统一使用 **英文**，以便 AI 模型更准确地理解和调用。
+在 **Settings -> Features -> MCP** (Cursor) 或 **Settings -> MCP** (Windsurf) 中添加：
 
-### 1. `connect_database`
-连接或切换到目标数据库。
-- **参数**: `dbtype`, `host`, `port`, `username`, `password`, `dbname`.
-- **特性**: 自动断开旧连接，验证新连接可用性。
+- **Name**: `sqltools`
+- **Type**: `command`
+- **Command**: `python -m sqltools_mcp.server`
 
-### 2. `execute_sql`
-执行 SQL 查询。
-- **参数**: `query` (必填), `timeout`.
-- **特性**: 支持 SELECT 和 DML 语句；自动处理数据类型转换（如 Decimal 转换为 float，datetime 转换为 ISO 字符串）。
+*(注意：请确保 `python` 环境已安装了上述依赖，或者提供 python 的完整路径)*
 
-### 3. `list_tables`
-列出数据库中的所有表。
-- **参数**: `schema`, `limit` (默认 100), `offset` (默认 0).
-- **特性**: 支持分页，返回表类型和行数估计。
+### 3. Roo Code (VS Code 插件)
 
-### 4. `describe_table`
-查看特定表的结构。
-- **参数**: `table_name` (必填), `schema`.
-- **特性**: 返回详尽的列信息：名称、类型、是否可空、主键标志、默认值等。
+点击 Roo Code 面板顶部的 **Settings** 按钮，在 **MCP Servers** -> **Edit Settings** (MCP Config) 中添加：
 
-### 5. `get_connection_status`
-检查当前连接状态。
-- **特性**: 返回当前连接的协议类型和基本配置（不含密码）。
-
-## 🗄️ 数据库适配器特别说明
-
-### 达梦 DM8
-- **驱动**: 自动搜索 `assets/DmJdbcDriver18.jar` 或环境变量 `DM_HOME`。
-- **注意**: 确保系统中已安装 JRE/JDK 8+。
-
-### SQLite
-- **路径**: `dbname` 参数必须提供文件的**绝对路径**。
-- **安全**: 已处理双引号转义，防止针对表名的注入。
-
-### SQL Server
-- Support SQL Server authentication.
-
-## 🔧 开发与测试
-
-### 使用 MCP Inspector
-```bash
-npx @modelcontextprotocol/inspector python -m sqltools_mcp.server
+```json
+"sqltools": {
+  "command": "python",
+  "args": ["-m", "sqltools_mcp.server"],
+  "env": {
+    "DB_TYPE": "mysql",
+    "DB_HOST": "localhost",
+    "DB_USER": "root",
+    "DB_PASSWORD": "password",
+    "DB_NAME": "test"
+  }
+}
 ```
 
-### 运行单元测试
-```bash
-pytest tests/
-```
+## 🛠️ 工具说明 (Tools)
+
+AI 模型可以通过以下英文接口与数据库交互：
+
+- `connect_database`: 连接/切换数据库。支持 dbtype (mysql, postgres, etc.)。
+- `execute_sql`: 执行任意 SQL 语句。
+- `list_tables`: 列出表名（支持 limit/offset 分页）。
+- `describe_table`: 查看表结构详情。
+- `get_connection_status`: 获取当前连接状态。
+
+## �️ 安全性
+
+本项目在 `SECURITY.md` 中详细列出了安全措施，包括表名转义和破坏性操作提醒，确保 AI 在操作数据库时的基本安全性。
 
 ## 📄 开源协议
 基于 [MIT License](LICENSE) 开源。
