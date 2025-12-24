@@ -32,7 +32,7 @@ Management via `uv` is recommended, though standard `pip` is also supported.
 
 ### 1. Clone and Install
 ```bash
-git clone <repository-url>
+git clone https://github.com/huangzt/sqltools_mcp
 cd sqltools-mcp
 pip install -e .
 ```

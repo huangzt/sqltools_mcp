@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
-    { name = "ting", email = "ting@example.com" }
+    { name = "huangzt", email = "huangzt@example.com" }
 ]
 keywords = ["mcp", "database", "mysql", "postgresql", "mssql", "dm8", "sqlite"]
 classifiers = [

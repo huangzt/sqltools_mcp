@@ -32,7 +32,7 @@
 
 ### 1. 克隆并安装环境
 ```bash
-git clone <repository-url>
+git clone https://github.com/huangzt/sqltools_mcp
 cd sqltools-mcp
 pip install -e .
 ```
