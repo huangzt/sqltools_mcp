@@ -1,0 +1,9 @@
+# Core MCP SDK
+mcp>=1.0.0
+
+# Database drivers
+pymysql>=1.0.0
+psycopg2-binary>=2.9.0
+pymssql>=2.2.0
+jaydebeapi>=1.2.0
+JPype1>=1.4.0
